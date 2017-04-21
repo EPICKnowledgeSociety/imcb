@@ -1,0 +1,30 @@
+{
+  "name": "imcb",
+  "version": "1.0.0",
+  "description": "Inter messanger connection bot ",
+  "main": "/source/app.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mujichOk/imcb.git"
+  },
+  "keywords": [
+    "bot",
+    "messanger",
+    "skype",
+    "telegram"
+  ],
+  "author": "mujichOk",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mujichOk/imcb/issues"
+  },
+  "homepage": "https://github.com/mujichOk/imcb#readme",
+  "dependencies": {
+    "botbuilder": "3.7.0",
+    "config": "1.25.1",
+    "express": "4.15.2"
+  }
+}
