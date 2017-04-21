@@ -1,3 +1,4 @@
 module.exports = {
-    skype: require('./skype')
+    skype: require('./skype'),
+    telegram: require('./telegram')
 };
