@@ -44,4 +44,6 @@ bot.dialog('/', (session) => {
       }
 });
 
-module.exports = router.post('/skype/messages', connector.listen());
+router.post('/skype/messages', connector.listen());
+
+module.exports = router;

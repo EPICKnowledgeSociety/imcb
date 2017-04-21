@@ -29,5 +29,5 @@ bot.on('message', function (msg) {
 
 module.exports = router;
 module.exports.init = (path) => {
-    bot.setWebHook(`${config.hosting.url}${path}/telegram/bot${config.protocols.telegram.token}`);
+    //bot.setWebHook(`${config.hosting.url}${path}/telegram/bot${config.protocols.telegram.token}`);
 };

@@ -1,7 +1,7 @@
 module.exports = {
     hosting: {
         port: process.env.PORT || 3000,
-        url: process.env.APP_URL || 'https://imc-bot.herokuapp.com:443'
+        url: process.env.APP_URL
     },
     protocols: {
         skype: {

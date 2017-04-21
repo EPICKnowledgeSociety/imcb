@@ -4,7 +4,8 @@
   "description": "Inter messanger connection bot ",
   "main": "/source/app.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "dev": "NODE_ENV=development node ./source/app.js"
   },
   "repository": {
     "type": "git",
