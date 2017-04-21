@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 app.use('/api', protocols.skype);
 app.use('/api', protocols.telegram);
 
-protocols.telegram.init('/api');
+//protocols.telegram.init('/api');
 
 app.listen(config.hosting.port, () => {
   console.log(`imcb started at ${config.hosting.port} port!`);
