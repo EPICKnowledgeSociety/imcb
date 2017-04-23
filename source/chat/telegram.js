@@ -5,7 +5,7 @@ const Bot = require('node-telegram-bot-api');
 module.exports = Factory;
 
 function Factory() {
-	const bot = new Bot(config.protocols.telegram.token/*, {webHook: {port: 443}}*/);
+	const bot = new Bot(config.protocols.telegram.token);
 
 	return {
 		getName,

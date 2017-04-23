@@ -31,7 +31,11 @@ function Factory({redisClient, path, bot, send}) {
 				return processRemoved.call(this, msg);
 			default:
 				if (!isCommand.test(msg.text))
-					return send('protocols.telegram', {chat: 'telegram:' + msg.chat.id, from: {name: msg.from.username}, message: msg.text});
+					return send('protocols.telegram', {
+						chat: 'telegram:' + msg.chat.id,
+						from: {name: msg.from.username},
+						message: msg.text
+					});
 		}
 	}
 
@@ -39,8 +43,10 @@ function Factory({redisClient, path, bot, send}) {
 		const command = (match[1] || '').trim();
 
 		switch (true) {
-			case (command === 'status'): return sendStatus(msg);
-			case (isLinkCommand.test(command)): return link(msg, command.match(isLinkCommand).slice(1));
+			case (command === 'status'):
+				return sendStatus(msg);
+			case (isLinkCommand.test(command)):
+				return link(msg, command.match(isLinkCommand).slice(1));
 		}
 	}
 
@@ -71,7 +77,8 @@ function Factory({redisClient, path, bot, send}) {
 		send('protocols.telegram', {to: msg.chat.id, message: `chat room registered as ${getChatId(msg.chat)}`});
 	}
 
-	function link(msg, clients, callback = () => {}) {
+	function link(msg, clients, callback = () => {
+	}) {
 		const chatA = clients[0];
 		const chatB = clients[1];
 
@@ -85,7 +92,10 @@ function Factory({redisClient, path, bot, send}) {
 					return callback(err);
 				}
 
-				send('protocols.telegram', {to: msg.chat.id, message: `chat rooms [${chatA}, ${chatB}] are linked now`});
+				send('protocols.telegram', {
+					to: msg.chat.id,
+					message: `chat rooms [${chatA}, ${chatB}] are linked now`
+				});
 
 				callback(null);
 			});

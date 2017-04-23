@@ -41,7 +41,11 @@ function Factory({path, bot, send}) {
 		if (session.message.text.toLowerCase().includes('status')) {
 			send('protocols.skype', {to, message: `chat room registered as skype:${to}`});
 		} else {
-			send('protocols.skype', {chat: 'skype:' + to, from: {name: session.message.user.name}, message: session.message.text});
+			send('protocols.skype', {
+				chat: 'skype:' + to,
+				from: {name: session.message.user.name},
+				message: session.message.text
+			});
 		}
 	});
 

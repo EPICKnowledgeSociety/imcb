@@ -41,9 +41,20 @@ function run({redisClient, amqpConnection}) {
 		channel.assertQueue('protocols.telegram', {durable: false});
 		channel.assertQueue('protocols.skype', {durable: false});
 
-		app.use('/api', protocols.skype({path: '/api', redisClient, amqpConnection, bot: skypeProtocol.bot, send}));
-		app.use('/api', protocols.telegram({path: '/api', redisClient, amqpConnection, bot: telegramProtocol.bot, send}));
-		//app.use('/api', protocols.facebook);
+		app.use('/api', protocols.skype({
+			path: '/api',
+			redisClient,
+			amqpConnection,
+			bot: skypeProtocol.bot,
+			send
+		}));
+		app.use('/api', protocols.telegram({
+			path: '/api',
+			redisClient,
+			amqpConnection,
+			bot: telegramProtocol.bot,
+			send
+		}));
 
 		app.listen(config.hosting.port, () => {
 			console.log(`imcb started at ${config.hosting.port} port!`);
