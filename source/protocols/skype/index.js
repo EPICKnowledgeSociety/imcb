@@ -1,49 +1,52 @@
 const config = require('config');
-const builder = require('botbuilder');
 const router = new require('express').Router();
 
-// Create chat bot
-const connector = new builder.ChatConnector({
-    appId: config.protocols.skype.appId,
-    appPassword: config.protocols.skype.appPassword
-});
+module.exports = Factory;
 
-const bot = new builder.UniversalBot(connector);
+function Factory({path, bot, send}) {
 
-//Bot on
-bot.on('contactRelationUpdate', (message) => {
-    if (message.action === 'add') {
-        var name = message.user ? message.user.name : null;
-        var reply = new builder.Message()
-                .address(message.address)
-                .text("Hello %s... Thanks for adding me. Say 'hello' to see some great demos.", name || 'there');
-        bot.send(reply);
-    } else {
-        // delete their data
-    }
-});
+	bot.on('contactRelationUpdate', (message) => {
+		console.log('skype', 'contactRelationUpdate', message);
 
-bot.on('typing', (message) => {
-  // User is typing
-});
+		if (message.action === 'add') {
+			send('protocols.skype', {to: message.address.conversation.id.split(':')[1], message: 'Hello!'});
+		} else {
+			// delete their data
+		}
+	});
 
-bot.on('deleteUserData', (message) => {
-    // User asked to delete their data
-});
+	bot.on('typing', (message) => {
+		//console.log('skype', 'typing', message);
+		// User is typing
+	});
+
+	bot.on('deleteUserData', (message) => {
+		console.log('skype', 'deleteUserData', message);
+
+		// User asked to delete their data
+	});
 //=========================================================
 // Bots Dialogs
 //=========================================================
 
-bot.dialog('/', (session) => {
-    if(session.message.text.toLowerCase().includes('hello')){
-      session.send('Hey, How are you?');
-      }else if(session.message.text.toLowerCase().includes('help')){
-        session.send('How can I help you?');
-      }else{
-        session.send(`Sorry I don't understand you...`);
-      }
-});
+	bot.dialog('/', (session) => {
+		console.log('skype', 'dialog /');
 
-router.post('/skype/messages', connector.listen());
+		session.on('error', function () {
+			console.log('skype error', arguments);
+		});
 
-module.exports = router;
+		const to = session.message.address.conversation.id.split(':')[1].split('@')[0];
+
+		if (session.message.text.toLowerCase().includes('status')) {
+			send('protocols.skype', {to, message: `chat room registered as skype:${to}`});
+		} else {
+			send('protocols.skype', {chat: 'skype:' + to, from: {name: session.message.user.name}, message: session.message.text});
+		}
+	});
+
+	router.post('/skype/messages', bot._connector.listen());
+
+	return router;
+}
+
