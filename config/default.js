@@ -15,7 +15,6 @@ module.exports = {
             appPassword: process.env.SKYPE_APP_PWD
         },
         telegram: {
-			username: 'inter_mc_bot',
         	token: process.env.TELEGRAM_TOKEN
         },
 		facebook: {
