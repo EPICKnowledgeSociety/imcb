@@ -32,8 +32,8 @@ function Factory({path, bot, send}) {
 	bot.dialog('/', (session) => {
 		console.log('skype', 'dialog /');
 
-		session.on('error', function () {
-			console.log('skype error', arguments);
+		session.on('error', (err) => {
+			console.log('skype error', err);
 		});
 
 		const to = session.message.address.conversation.id.split(':')[1].split('@')[0];
