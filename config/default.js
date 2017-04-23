@@ -4,7 +4,7 @@ module.exports = {
         url: process.env.APP_URL
     },
     redis: {
-		url: ''
+		url: process.env.REDIS_URL
 	},
     amqp: {
     	url: process.env.AMQP_URL
