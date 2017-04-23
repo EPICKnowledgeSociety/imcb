@@ -4,8 +4,9 @@ const router = new require('express').Router();
 module.exports = Factory;
 
 const isCommand = new RegExp(`^@${config.protocols.telegram.username}( .*)?`);
+const isLinkCommand = new RegExp('^link (.*) (.*)');
 
-function Factory({path, bot, send}) {
+function Factory({redisClient, path, bot, send}) {
 	bot.on('message', onBotMessage);
 	bot.onText(isCommand, onBotCommandMessage);
 	bot.setWebHook(`${config.hosting.url}${path}/telegram/bot${config.protocols.telegram.token}`);
@@ -39,6 +40,7 @@ function Factory({path, bot, send}) {
 
 		switch (true) {
 			case (command === 'status'): return sendStatus(msg);
+			case (isLinkCommand.test(command)): return link(msg, command.match(isLinkCommand).slice(1));
 		}
 	}
 
@@ -67,5 +69,26 @@ function Factory({path, bot, send}) {
 
 	function sendStatus(msg) {
 		send('protocols.telegram', {to: msg.chat.id, message: `chat room registered as ${getChatId(msg.chat)}`});
+	}
+
+	function link(msg, clients, callback = () => {}) {
+		const chatA = clients[0];
+		const chatB = clients[1];
+
+		redisClient.sadd(chatA + ':link', chatB, true, (err, res) => {
+			if (err) {
+				return callback(err);
+			}
+
+			redisClient.sadd(chatB + ':link', chatA, true, (err, res) => {
+				if (err) {
+					return callback(err);
+				}
+
+				send('protocols.telegram', {to: msg.chat.id, message: `chat rooms [${chatA}, ${chatB}] are linked now`});
+
+				callback(null);
+			});
+		});
 	}
 }
