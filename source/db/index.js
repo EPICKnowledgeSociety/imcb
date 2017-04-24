@@ -14,43 +14,52 @@ function Factory({redisClient}) {
 		linkedChats
 	};
 
-	function registerChat(chat, callback) {
+	function registerChat(chat, callback = noop) {
 		redisClient
 			.exists(getKey(chat), (err, res) => {
 				if (err) {
+					console.error('registerChat', err);
 					return callback(err);
 				}
 
 				if (res) {
-					return callback(new Error(`${chat} already registered`));
+					err = new Error(`${chat} already registered`);
+					console.error('registerChat', err);
+					return callback(err);
 				}
 
 				redisClient
 					.set(getKey(chat), true, (err) => {
 						if (err) {
+							console.error('registerChat', err);
 							return callback(err);
 						}
 
+						console.log(`${chat} chat registered`);
 						callback();
 					});
 			});
 	}
 
-	function unregisterChat(chat, callback) {
+	function unregisterChat(chat, callback = noop) {
 		redisClient
 			.exists(getKey(chat), (err, res) => {
 				if (err) {
+					console.error('unregisterChat', err);
 					return callback(err);
 				}
 
 				if (!res) {
-					return callback(new Error(`${chat} not registered`));
+					err = new Error(`${chat} not registered`);
+					console.error('unregisterChat', err);
+					return callback(err);
 				}
 
 				redisClient
 					.multi()
 					.smembers(getLinkKey(chat), (err, res) => {
 						if (err) {
+							console.error('unregisterChat', err);
 							return callback(err);
 						}
 
@@ -59,25 +68,36 @@ function Factory({redisClient}) {
 
 						redisClient
 							.multi(commands)
-							.exec((err) => callback(err));
+							.exec((err) => {
+								if (err) {
+									console.error('unregisterChat', err);
+									return callback(err);
+								}
+
+								console.log(`${chat} chat unregistered`);
+								callback();
+							});
 					})
 					.del(getKeys(chat))
 					.exec();
 			});
 	}
 
-	function linkChats(chatA, chatB, callback) {
+	function linkChats(chatA, chatB, callback = noop) {
 		redisClient
 			.multi()
 			.exists(getKey(chatA))
 			.exists(getKey(chatB))
 			.exec((err, res) => {
 				if (err) {
+					console.error('linkChats', err);
 					return callback(err);
 				}
 
 				if (!res[0] || !res[1]) {
-					return callback(new Error(`${res[0] ? chatA : chatB} not registered`));
+					err = new Error(`${res[0] ? chatA : chatB} not registered`);
+					console.error('linkChats', err);
+					return callback();
 				}
 
 				redisClient
@@ -86,32 +106,41 @@ function Factory({redisClient}) {
 					.sadd(getLinkKey(chatB), chatA)
 					.exec((err, res) => {
 						if (err) {
+							console.error('linkChats', err);
 							return callback(err);
 						}
 
 						if (res[0] && res[1]) {
+							console.log(`chats ${chatA} and ${chatB} are linked`);
 							return callback();
 						} else if (!res[0] && !res[1]) {
-							return callback(new Error('link failed'));
+							err = new Error('link failed');
+							console.error('linkChats', err);
+							return callback(err);
 						}
 
-						return callback(new Error(`${res[0] ? chatA : chatB} not linked with ${res[0] ? chatB : chatA}`));
+						err = new Error(`${res[0] ? chatA : chatB} not linked with ${res[0] ? chatB : chatA}`);
+						console.error('linkChats', err);
+						return callback(err);
 					});
 			});
 	}
 
-	function unlinkChats(chatA, chatB, callback) {
+	function unlinkChats(chatA, chatB, callback = noop) {
 		redisClient
 			.multi()
 			.exists(getKey(chatA))
 			.exists(getKey(chatB))
 			.exec((err, res) => {
 				if (err) {
+					console.error('unlinkChats', err);
 					return callback(err);
 				}
 
 				if (!res[0] || !res[1]) {
-					return callback(new Error(`${res[0] ? chatA : chatB} not registered`));
+					err = new Error(`${res[0] ? chatA : chatB} not registered`);
+					console.error('unlinkChats', err);
+					return callback(err);
 				}
 
 				redisClient
@@ -120,34 +149,44 @@ function Factory({redisClient}) {
 					.srem(getLinkKey(chatB), chatA)
 					.exec((err, res) => {
 						if (err) {
+							console.error('unlinkChats', err);
 							return callback(err);
 						}
 
 						if (res[0] && res[1]) {
+							console.log(`chats ${chatA} and ${chatB} are unlinked`);
 							return callback();
 						} else if (!res[0] && !res[1]) {
-							return callback(new Error('unlink failed'));
+							err = new Error('unlink failed');
+							console.error('unlinkChats', err);
+							return callback(err);
 						}
 
-						return callback(new Error(`${res[0] ? chatA : chatB} not linked with ${res[0] ? chatB : chatA}`));
+						err = new Error(`${res[0] ? chatA : chatB} not linked with ${res[0] ? chatB : chatA}`);
+						console.error('unlinkChats', err);
+						return callback(err);
 					});
 			});
 	}
 
-	function linkedChats(chat, callback) {
+	function linkedChats(chat, callback = noop) {
 		redisClient
 			.exists(getKey(chat), (err, res) => {
 				if (err) {
+					console.error('linkedChats', err);
 					return callback(err);
 				}
 
 				if (!res) {
-					return callback(new Error(`${chat} not registered`));
+					err = new Error(`${chat} not registered`);
+					console.error('linkedChats', err);
+					return callback();
 				}
 
 				redisClient
 					.smembers(getLinkKey(chat), (err, res) => {
 						if (err) {
+							console.error('linkedChats', err);
 							return callback(err);
 						}
 						callback(null, res);
@@ -167,4 +206,7 @@ function getLinkKey(chat) {
 function getKeys(chat) {
 	const suffixes = ['', ':link'];
 	return suffixes.map((suffix) => chat + suffix);
+}
+
+function noop() {
 }

@@ -3,13 +3,11 @@ const router = new require('express').Router();
 
 module.exports = Factory;
 
-const isCommand = new RegExp(`^@${config.protocols.telegram.username}( .*)?`);
-const isLinkCommand = new RegExp('^link (.*) (.*)');
-const isUnlinkCommand = new RegExp('^unlink (.*) (.*)');
+function Factory({path, bot, commands, helperFactory}) {
+	const helper = helperFactory(getChatId);
 
-function Factory({path, bot, send, commands}) {
 	bot.on('message', onBotMessage);
-	bot.onText(isCommand, onBotCommandMessage);
+	bot.onText(helperFactory.isCommand, onBotCommandMessage);
 	bot.setWebHook(`${config.hosting.url}${path}/telegram/bot${config.protocols.telegram.token}`);
 
 	router.post(`/telegram/bot${config.protocols.telegram.token}`, onPost);
@@ -31,10 +29,10 @@ function Factory({path, bot, send, commands}) {
 			case isRemoved.call(this, msg):
 				return processRemoved.call(this, msg);
 			default:
-				if (!isCommand.test(msg.text))
-					return send({
+				if (!helperFactory.isCommand.test(msg.text))
+					return helperFactory.send({
 						broadcast: true,
-						to: 'telegram:' + msg.chat.id,
+						to: getChatId(msg),
 						from: {name: msg.from.username},
 						message: msg.text
 					});
@@ -46,11 +44,11 @@ function Factory({path, bot, send, commands}) {
 
 		switch (true) {
 			case (command === 'status'):
-				return sendStatus(msg);
-			case (isLinkCommand.test(command)):
-				return link(msg, command.match(isLinkCommand).slice(1));
-			case (isUnlinkCommand.test(command)):
-				return unlink(msg, command.match(isUnlinkCommand).slice(1));
+				return helper.sendStatus(msg);
+			case (helperFactory.isLinkCommand.test(command)):
+				return link(msg, command.match(helperFactory.isLinkCommand).slice(1));
+			case (helperFactory.isUnlinkCommand.test(command)):
+				return unlink(msg, command.match(helperFactory.isUnlinkCommand).slice(1));
 		}
 	}
 
@@ -61,14 +59,11 @@ function Factory({path, bot, send, commands}) {
 	}
 
 	function processInvited(msg) {
-		commands.register(getChatId(msg.chat), (err) => {
+		commands.register(getChatId(msg), (err) => {
 			if (err) {
-				console.error(err);
-				return sendError(msg, err);
+				return helper.sendError(msg, err);
 			}
-
-			console.log(`${getChatId(msg.chat)} chat registered`);
-			sendStatus(msg);
+			helper.sendStatus(msg);
 		});
 	}
 
@@ -78,13 +73,7 @@ function Factory({path, bot, send, commands}) {
 	}
 
 	function processRemoved(msg) {
-		commands.unregister(getChatId(msg.chat), (err) => {
-			if (err) {
-				return console.error(err);
-			}
-
-			console.log(`${getChatId(msg.chat)} chat unregistered`);
-		});
+		commands.unregister(getChatId(msg));
 	}
 
 	function link(msg, clients) {
@@ -93,12 +82,9 @@ function Factory({path, bot, send, commands}) {
 
 		commands.link(chatA, chatB, (err) => {
 			if (err) {
-				console.error(err);
-				return sendError(msg, err);
+				return helper.sendError(msg, err);
 			}
-
-			console.log(`chats ${chatA} and ${chatB} linked`);
-			sendLinkStatus(msg, chatA, chatB);
+			helper.sendLinkStatus(msg, chatA, chatB);
 		});
 	}
 
@@ -108,34 +94,13 @@ function Factory({path, bot, send, commands}) {
 
 		commands.unlink(chatA, chatB, (err) => {
 			if (err) {
-				console.error(err);
-				return sendError(msg, err);
+				return helper.sendError(msg, err);
 			}
-
-			console.log(`chats ${chatA} and ${chatB} are unlinked`);
-			sendUnlinkStatus(msg, chatA, chatB);
+			helper.sendUnlinkStatus(msg, chatA, chatB);
 		});
 	}
 
-
-	function getChatId(chat) {
-		return `telegram:${chat.id}`;
+	function getChatId(msg) {
+		return `telegram:${msg.chat.id}`;
 	}
-
-	function sendStatus(msg) {
-		send({to: msg.chat.id, message: `chat registered as ${getChatId(msg.chat)}`});
-	}
-
-	function sendLinkStatus(msg, chatA, chatB) {
-		send({to: msg.chat.id, message: `chats ${chatA} and ${chatB} are linked`});
-	}
-
-	function sendUnlinkStatus(msg, chatA, chatB) {
-		send({to: msg.chat.id, message: `chats ${chatA} and ${chatB} are unlinked`});
-	}
-
-	function sendError(msg, error) {
-		send({to: msg.chat.id, message: `Oops! Error...\n ${error.toString()}`});
-	}
-
 }

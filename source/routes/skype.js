@@ -1,43 +1,38 @@
-//const config = require('config');
 const router = new require('express').Router();
 
 module.exports = Factory;
 
-function Factory({/*path,*/ bot, send}) {
+function Factory({bot, commands, helperFactory}) {
+	const helper = helperFactory(getChatId);
 
 	bot.on('contactRelationUpdate', (message) => {
 		console.log('skype', 'contactRelationUpdate', message);
 
 		if (message.action === 'add') {
-			send({to: message.address.conversation.id.split(':')[1], message: 'Hello!'});
+			commands.register(getChatId(message), (err) => {
+				if (err) {
+					return helper.sendError(message, err);
+				}
+				return helper.sendStatus(message);
+			});
 		} else {
-			// delete their data
+			commands.unregister(getChatId(message));
 		}
 	});
 
 	//bot.on('typing', (message) => {});
-
-	bot.on('deleteUserData', (message) => {
-		console.log('skype', 'deleteUserData', message);
-
-		// User asked to delete their data
-	});
+	//bot.on('deleteUserData', (message) => {
+	//	console.log('skype', 'deleteUserData', message);
+	// User asked to delete their data
+	//});
 
 	bot.dialog('/', (session) => {
-		console.log('skype', 'dialog /');
-
-		session.on('error', (err) => {
-			console.log('skype error', err);
-		});
-
-		const to = session.message.address.conversation.id.split(':')[1].split('@')[0];
-
-		if (session.message.text.toLowerCase().includes('status')) {
-			send({to, message: `chat room registered as skype:${to}`});
+		if (session.message.text.includes('status')) {
+			return helper.sendStatus(session.message);
 		} else {
-			send({
+			helperFactory.send({
 				broadcast: true,
-				to: 'skype:' + to,
+				to: getChatId(session.message),
 				from: {name: session.message.user.name},
 				message: session.message.text
 			});
@@ -49,3 +44,6 @@ function Factory({/*path,*/ bot, send}) {
 	return router;
 }
 
+function getChatId(message) {
+	return `skype:${message.address.conversation.id.split(':')[1]}`;
+}

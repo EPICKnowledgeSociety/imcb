@@ -11,13 +11,16 @@ module.exports = {
 	},
 	protocols: {
 		skype: {
+			botName: 'inter_mc_bot',
 			appId: process.env.SKYPE_APP_ID,
 			appPassword: process.env.SKYPE_APP_PWD
 		},
 		telegram: {
+			botName: 'inter_mc_bot',
 			token: process.env.TELEGRAM_TOKEN
 		},
 		facebook: {
+			botName: '',
 			token: process.env.FACEBOOK_TOKEN,
 			pageToken: process.env.FACEBOOK_PAGE_TOKEN
 		}
