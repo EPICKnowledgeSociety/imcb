@@ -1,2 +1,2 @@
 # imcb
-Inter Messenger Connection Bot
+Inter Messenger Connection Bot (Skype, Telegram)
