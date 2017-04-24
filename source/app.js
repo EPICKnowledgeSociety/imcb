@@ -4,65 +4,60 @@ const amqp = require('amqplib/callback_api');
 const express = require('express');
 const bodyParser = require('body-parser');
 
-const protocols = require('./protocols');
+const routes = require('./routes');
 
-const telegramProtocol = require('./chat/telegram')();
-const skypeProtocol = require('./chat/skype')();
+const redisClient = redis.createClient(config.redis.url);
+const db = require('./db')({redisClient});
+
+const protocols = {
+	telegram: require('./protocols/telegram')(),
+	skype: require('./protocols/skype')()
+};
 
 const app = express();
 
-app.use(bodyParser.json());
-
 
 amqp.connect(config.amqp.url, (err, amqpConnection) => {
-	const redisClient = redis.createClient(config.redis.url);
-	const telegramServer = require('./chat/index')({redisClient, amqpConnection, protocol: telegramProtocol});
-	const skypeServer = require('./chat/index')({redisClient, amqpConnection, protocol: skypeProtocol});
+	require('./protocols/index')({db, amqpConnection, protocol: protocols.telegram});
+	require('./protocols/index')({db, amqpConnection, protocol: protocols.skype});
 
-	run({amqpConnection, redisClient});
+	run({amqpConnection});
 });
 
 
-function run({redisClient, amqpConnection}) {
-	app.use((req, res, next) => {
-		req.bots = {
-			telegram: telegramProtocol.bot
-		};
-		req.redis = redisClient;
-		req.amqp = amqpConnection;
-		next();
-	});
-
-	app.get('/', (req, res) => {
-		res.send('IMCB');
-	});
+function run({amqpConnection}) {
+	app.use(bodyParser.json());
+	app.use('/', routes.index);
 
 	amqpConnection.createChannel((err, channel) => {
-		channel.assertQueue('protocols.telegram', {durable: false});
-		channel.assertQueue('protocols.skype', {durable: false});
+		channel.assertQueue('protocols.telegram', {durable: true});
+		channel.assertQueue('protocols.skype', {durable: true});
 
-		app.use('/api', protocols.skype({
+		app.use('/api', routes.skype({
 			path: '/api',
-			redisClient,
-			amqpConnection,
-			bot: skypeProtocol.bot,
-			send
+			bot: protocols.skype.bot,
+			send: send.bind(this, 'skype')
 		}));
-		app.use('/api', protocols.telegram({
+		app.use('/api', routes.telegram({
 			path: '/api',
-			redisClient,
-			amqpConnection,
-			bot: telegramProtocol.bot,
-			send
+			bot: protocols.telegram.bot,
+			send: send.bind(this, 'telegram'),
+			commands: {
+				register: db.registerChat,
+				unregister: db.unregisterChat,
+				link: db.linkChats,
+				unlink: db.unlinkChats,
+				links: db.linkedChats
+			}
 		}));
 
 		app.listen(config.hosting.port, () => {
 			console.log(`imcb started at ${config.hosting.port} port!`);
 		});
 
+
 		function send(queryName, message) {
-			return channel.sendToQueue(queryName, new Buffer(JSON.stringify(message)));
+			return channel.sendToQueue(`protocols.${queryName}`, new Buffer(JSON.stringify(message)));
 		}
 	});
-
 }

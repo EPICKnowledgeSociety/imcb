@@ -1,4 +1,4 @@
-const assert = require('assert');
+//const assert = require('assert');
 const config = require('config');
 const Bot = require('node-telegram-bot-api');
 
@@ -21,5 +21,6 @@ function Factory() {
 	function send({from, to, message} = {}, callback) {
 		const messageForSend = from && from.name ? `${from.name}\n${message}` : message;
 		bot.sendMessage(to, messageForSend);
+		process.nextTick(callback);
 	}
 }
