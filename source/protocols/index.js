@@ -34,14 +34,17 @@ function Factory({db, amqpConnection, protocol} = {}) {
 							const m = Object.assign(message, {to: chatId});
 							protocol.send(m);
 						} else {
-							const m = Object.assign(message, {to: chatId, broadcast: undefined});
+							const m = Object.assign(message, {to: val, broadcast: undefined});
 							channel.sendToQueue('protocols.' + chatProtocol, new Buffer(JSON.stringify(m)));
 						}
 					});
 
 				});
 			} else {
-				protocol.send(message);
+				const chatId = getChatId(message.to);
+				const m = Object.assign(message, {to: chatId});
+
+				protocol.send(m);
 			}
 		}, {noAck: true});
 	});
