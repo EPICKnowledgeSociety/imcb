@@ -13,7 +13,7 @@ function Factory({db, amqpConnection, protocol} = {}) {
 
 		channel.assertQueue(queryName, {durable: !configHelper.isAmpqLiteMode()});
 		channel.consume(queryName, (msg) => {
-			console.log('Received %s', msg.content.toString());
+			console.log('received', msg.content.toString());
 
 			const message = JSON.parse(msg.content);
 
