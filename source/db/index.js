@@ -95,9 +95,9 @@ function Factory({redisClient}) {
 				}
 
 				if (!res[0] || !res[1]) {
-					err = new Error(`${res[0] ? chatA : chatB} not registered`);
+					err = new Error(`${res[0] ? chatB : chatA} not registered`);
 					console.error('linkChats', err);
-					return callback();
+					return callback(err);
 				}
 
 				redisClient
@@ -114,12 +114,11 @@ function Factory({redisClient}) {
 							console.log(`chats ${chatA} and ${chatB} are linked`);
 							return callback();
 						} else if (!res[0] && !res[1]) {
-							err = new Error('link failed');
-							console.error('linkChats', err);
-							return callback(err);
+							console.log(`chats ${chatA} and ${chatB} are already linked`);
+							return callback();
 						}
 
-						err = new Error(`${res[0] ? chatA : chatB} not linked with ${res[0] ? chatB : chatA}`);
+						err = new Error(`error linking ${res[0] ? chatA : chatB} with ${res[0] ? chatB : chatA}`);
 						console.error('linkChats', err);
 						return callback(err);
 					});
@@ -138,7 +137,7 @@ function Factory({redisClient}) {
 				}
 
 				if (!res[0] || !res[1]) {
-					err = new Error(`${res[0] ? chatA : chatB} not registered`);
+					err = new Error(`${res[0] ? chatB : chatA} not registered`);
 					console.error('unlinkChats', err);
 					return callback(err);
 				}
@@ -157,9 +156,8 @@ function Factory({redisClient}) {
 							console.log(`chats ${chatA} and ${chatB} are unlinked`);
 							return callback();
 						} else if (!res[0] && !res[1]) {
-							err = new Error('unlink failed');
-							console.error('unlinkChats', err);
-							return callback(err);
+							console.log(`chats ${chatA} and ${chatB} are not linked`);
+							return callback();
 						}
 
 						err = new Error(`${res[0] ? chatA : chatB} not linked with ${res[0] ? chatB : chatA}`);

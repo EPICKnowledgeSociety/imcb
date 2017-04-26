@@ -78,6 +78,7 @@ function helperFactory(protocol, send, getChatId) {
 		isUnlinkCommand,
 
 		send: send.bind(null, protocol),
+
 		sendStatus: (msg) =>
 			send({to: getChatId(msg), message: `chat registered as ${getChatId(msg)}`}),
 
