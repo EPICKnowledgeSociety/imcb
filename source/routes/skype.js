@@ -1,3 +1,4 @@
+const config = require('config');
 const router = new require('express').Router();
 
 module.exports = Factory;
@@ -37,7 +38,7 @@ function Factory({bot, db, BotCommandsFactory}) {
 					broadcast: true,
 					to: getChatId(session.message),
 					from: {name: session.message.user.name},
-					message: session.message.text
+					message: getChatMessageText(session.message).slice(`@${config.protocols.skype.botName}`.length)
 				});
 			}
 		);
