@@ -1,4 +1,5 @@
 const assert = require('assert');
+const configHelper = require('../utils/configHelper');
 
 module.exports = Factory;
 
@@ -10,7 +11,7 @@ function Factory({db, amqpConnection, protocol} = {}) {
 	amqpConnection.createChannel((err, channel) => {
 		const queryName = 'protocols.' + protocol.getName();
 
-		channel.assertQueue(queryName, {durable: true});
+		channel.assertQueue(queryName, {durable: !configHelper.isAmpqLiteMode()});
 		channel.consume(queryName, (msg) => {
 			console.log('Received %s', msg.content.toString());
 
@@ -19,18 +20,22 @@ function Factory({db, amqpConnection, protocol} = {}) {
 			if (message.broadcast) {
 				db.linkedChats(message.to, (err, links) => {
 					if (err) {
+						const chatId = getChatId(message.to);
+						protocol.send({to: chatId, message: err.toString()});
+
 						return console.error(err);
 					}
 
 					links.forEach((val) => {
-						const parts = val.split(':');
+						const chatProtocol = getChatProtocol(val);
+						const chatId = getChatId(val);
 
-						if (parts[0] === protocol.getName()) {
-							const m = Object.assign(message, {to: parts[1]});
+						if (chatProtocol === protocol.getName()) {
+							const m = Object.assign(message, {to: chatId});
 							protocol.send(m);
 						} else {
-							const m = Object.assign(message, {to: parts[1], broadcast: undefined});
-							channel.sendToQueue('protocols.' + parts[0], new Buffer(JSON.stringify(m)));
+							const m = Object.assign(message, {to: chatId, broadcast: undefined});
+							channel.sendToQueue('protocols.' + chatProtocol, new Buffer(JSON.stringify(m)));
 						}
 					});
 
@@ -40,4 +45,11 @@ function Factory({db, amqpConnection, protocol} = {}) {
 			}
 		}, {noAck: true});
 	});
+}
+
+function getChatProtocol(to) {
+	return to.split(':')[0];
+}
+function getChatId(to) {
+	return to.split(':')[1];
 }

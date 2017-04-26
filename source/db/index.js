@@ -178,7 +178,7 @@ function Factory({redisClient}) {
 				if (!res) {
 					err = new Error(`${chat} not registered`);
 					console.error('linkedChats', err);
-					return callback();
+					return callback(err);
 				}
 
 				redisClient

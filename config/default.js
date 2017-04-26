@@ -7,11 +7,12 @@ module.exports = {
 		url: process.env.REDIS_URL
 	},
 	amqp: {
-		url: process.env.AMQP_URL
+		url: process.env.AMQP_URL,
+		lite: true
 	},
 	protocols: {
 		skype: {
-			botName: 'inter_mc_bot',
+			botName: 'imcb',
 			appId: process.env.SKYPE_APP_ID,
 			appPassword: process.env.SKYPE_APP_PWD
 		},

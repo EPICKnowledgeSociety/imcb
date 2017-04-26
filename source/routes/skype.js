@@ -2,21 +2,21 @@ const router = new require('express').Router();
 
 module.exports = Factory;
 
-function Factory({bot, commands, helperFactory}) {
-	const helper = helperFactory(getChatId);
+function Factory({bot, db, BotCommandsFactory}) {
+	const botCommands = BotCommandsFactory(getChatId);
 
 	bot.on('contactRelationUpdate', (message) => {
 		console.log('skype', 'contactRelationUpdate', message);
 
 		if (message.action === 'add') {
-			commands.register(getChatId(message), (err) => {
+			db.registerChat(getChatId(message), (err) => {
 				if (err) {
-					return helper.sendError(message, err);
+					return botCommands.sendError(message, err);
 				}
-				return helper.sendStatus(message);
+				return botCommands.sendStatus(message);
 			});
 		} else {
-			commands.unregister(getChatId(message));
+			db.unregisterChat(getChatId(message));
 		}
 	});
 
@@ -28,9 +28,9 @@ function Factory({bot, commands, helperFactory}) {
 
 	bot.dialog('/', (session) => {
 		if (session.message.text.includes('status')) {
-			return helper.sendStatus(session.message);
+			return botCommands.sendStatus(session.message);
 		} else {
-			helperFactory.send({
+			botCommands.send({
 				broadcast: true,
 				to: getChatId(session.message),
 				from: {name: session.message.user.name},

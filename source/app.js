@@ -1,5 +1,5 @@
-const assert = require('assert');
 const config = require('config');
+const configHelper = require('./utils/configHelper');
 const redis = require('redis');
 const amqp = require('amqplib/callback_api');
 const express = require('express');
@@ -8,14 +8,10 @@ const bodyParser = require('body-parser');
 const routes = require('./routes');
 
 const redisClient = redis.createClient(config.redis.url);
+
 const db = require('./db')({redisClient});
-const commands = {
-	register: db.registerChat,
-	unregister: db.unregisterChat,
-	link: db.linkChats,
-	unlink: db.unlinkChats,
-	links: db.linkedChats
-};
+
+const BotCommandsFactory = require('./utils/botCommands');
 
 const protocols = {
 	telegram: require('./protocols/telegram')(),
@@ -37,20 +33,20 @@ function run({amqpConnection}) {
 	app.use('/', routes.index);
 
 	amqpConnection.createChannel((err, channel) => {
-		channel.assertQueue('protocols.telegram', {durable: true});
-		channel.assertQueue('protocols.skype', {durable: true});
+		channel.assertQueue('protocols.telegram', {durable: !configHelper.isAmpqLiteMode()});
+		channel.assertQueue('protocols.skype', {durable: !configHelper.isAmpqLiteMode()});
 
 		app.use('/api', routes.skype({
 			path: '/api',
 			bot: protocols.skype.bot,
-			commands,
-			helperFactory: helperFactory.bind(null, 'skype', send)
+			db,
+			BotCommandsFactory: BotCommandsFactory.bind(null, 'skype', send)
 		}));
 		app.use('/api', routes.telegram({
 			path: '/api',
 			bot: protocols.telegram.bot,
-			commands,
-			helperFactory: helperFactory.bind(null, 'telegram', send)
+			db,
+			BotCommandsFactory: BotCommandsFactory.bind(null, 'telegram', send)
 		}));
 
 		app.listen(config.hosting.port, () => {
@@ -61,34 +57,4 @@ function run({amqpConnection}) {
 			return channel.sendToQueue(`protocols.${queryName}`, new Buffer(JSON.stringify(message)));
 		}
 	});
-}
-
-
-
-function helperFactory(protocol, send, getChatId) {
-	assert(config.protocols[protocol].name, `config.protocols.${protocol}.name must be defined`);
-
-	const isCommand = new RegExp(`^@${config.protocols[protocol].name}( .*)?`);
-	const isLinkCommand = new RegExp('^link (.*) (.*)');
-	const isUnlinkCommand = new RegExp('^unlink (.*) (.*)');
-
-	return {
-		isCommand,
-		isLinkCommand,
-		isUnlinkCommand,
-
-		send: send.bind(null, protocol),
-
-		sendStatus: (msg) =>
-			send({to: getChatId(msg), message: `chat registered as ${getChatId(msg)}`}),
-
-		sendLinkStatus: (msg, chatA, chatB) =>
-			send({to: getChatId(msg), message: `chats ${chatA} and ${chatB} are linked`}),
-
-		sendUnlinkStatus: (msg, chatA, chatB) =>
-			send({to: getChatId(msg), message: `chats ${chatA} and ${chatB} are unlinked`}),
-
-		sendError: (msg, error) =>
-			send({to: getChatId(msg), message: `Oops! Error...\n ${error.toString()}`})
-	};
 }

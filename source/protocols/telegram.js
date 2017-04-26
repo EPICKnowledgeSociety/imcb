@@ -21,6 +21,9 @@ function Factory() {
 	function send({from, to, message} = {}, callback) {
 		const messageForSend = from && from.name ? `${from.name}\n${message}` : message;
 		bot.sendMessage(to, messageForSend);
-		process.nextTick(callback);
+
+		if (typeof callback === 'function') {
+			process.nextTick(callback);
+		}
 	}
 }

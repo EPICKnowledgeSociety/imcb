@@ -3,11 +3,11 @@ const router = new require('express').Router();
 
 module.exports = Factory;
 
-function Factory({path, bot, commands, helperFactory}) {
-	const helper = helperFactory(getChatId);
+function Factory({path, bot, db, BotCommandsFactory}) {
+	const botCommands = BotCommandsFactory(getChatId);
 
 	bot.on('message', onBotMessage);
-	bot.onText(helperFactory.isCommand, onBotCommandMessage);
+	bot.onText(botCommands.isCommand, onBotCommandMessage);
 	bot.setWebHook(`${config.hosting.url}${path}/telegram/bot${config.protocols.telegram.token}`);
 
 	router.post(`/telegram/bot${config.protocols.telegram.token}`, onPost);
@@ -15,7 +15,7 @@ function Factory({path, bot, commands, helperFactory}) {
 	return router;
 
 	function onPost(req, res) {
-		req.bots.telegram.processUpdate(req.body);
+		bot.processUpdate(req.body);
 		res.sendStatus(200);
 	}
 
@@ -29,8 +29,8 @@ function Factory({path, bot, commands, helperFactory}) {
 			case isRemoved.call(this, msg):
 				return processRemoved.call(this, msg);
 			default:
-				if (!helperFactory.isCommand.test(msg.text))
-					return helperFactory.send({
+				if (!botCommands.isCommand.test(msg.text))
+					return botCommands.send({
 						broadcast: true,
 						to: getChatId(msg),
 						from: {name: msg.from.username},
@@ -44,11 +44,11 @@ function Factory({path, bot, commands, helperFactory}) {
 
 		switch (true) {
 			case (command === 'status'):
-				return helper.sendStatus(msg);
-			case (helperFactory.isLinkCommand.test(command)):
-				return link(msg, command.match(helperFactory.isLinkCommand).slice(1));
-			case (helperFactory.isUnlinkCommand.test(command)):
-				return unlink(msg, command.match(helperFactory.isUnlinkCommand).slice(1));
+				return botCommands.sendStatus(msg);
+			case (botCommands.isLinkCommand.test(command)):
+				return link(msg, command.match(BotCommandsFactory.isLinkCommand).slice(1));
+			case (botCommands.isUnlinkCommand.test(command)):
+				return unlink(msg, command.match(BotCommandsFactory.isUnlinkCommand).slice(1));
 		}
 	}
 
@@ -59,11 +59,11 @@ function Factory({path, bot, commands, helperFactory}) {
 	}
 
 	function processInvited(msg) {
-		commands.register(getChatId(msg), (err) => {
+		db.registerChat(getChatId(msg), (err) => {
 			if (err) {
-				return helper.sendError(msg, err);
+				return botCommands.sendError(msg, err);
 			}
-			helper.sendStatus(msg);
+			botCommands.sendStatus(msg);
 		});
 	}
 
@@ -73,18 +73,18 @@ function Factory({path, bot, commands, helperFactory}) {
 	}
 
 	function processRemoved(msg) {
-		commands.unregister(getChatId(msg));
+		db.unregisterChat(getChatId(msg));
 	}
 
 	function link(msg, clients) {
 		const chatA = clients[0];
 		const chatB = clients[1];
 
-		commands.link(chatA, chatB, (err) => {
+		db.linkChats(chatA, chatB, (err) => {
 			if (err) {
-				return helper.sendError(msg, err);
+				return botCommands.sendError(msg, err);
 			}
-			helper.sendLinkStatus(msg, chatA, chatB);
+			botCommands.sendLinkStatus(msg, chatA, chatB);
 		});
 	}
 
@@ -92,11 +92,11 @@ function Factory({path, bot, commands, helperFactory}) {
 		const chatA = clients[0];
 		const chatB = clients[1];
 
-		commands.unlink(chatA, chatB, (err) => {
+		db.unlinkChats(chatA, chatB, (err) => {
 			if (err) {
-				return helper.sendError(msg, err);
+				return botCommands.sendError(msg, err);
 			}
-			helper.sendUnlinkStatus(msg, chatA, chatB);
+			botCommands.sendUnlinkStatus(msg, chatA, chatB);
 		});
 	}
 
