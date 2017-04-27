@@ -1,5 +1,3 @@
-require('isomorphic-fetch');
-
 const config = require('config');
 const configHelper = require('./utils/configHelper');
 const redis = require('redis');
