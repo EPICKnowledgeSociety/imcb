@@ -26,12 +26,16 @@ function Factory({path, bot, BotCommandsFactory}) {
 			.then((filePath) => {
 				const imgUrl = `https://api.telegram.org/file/bot${config.protocols.telegram.token}/${filePath}`;
 
-				cloudconvert.convert({
-					inputformat: 'webp',
-					outputformat: 'png',
-					input: 'download',
-     				file: imgUrl
-				}).pipe(res);
+				try {
+					cloudconvert.convert({
+						inputformat: 'webp',
+						outputformat: 'png',
+						input: 'download',
+						file: imgUrl
+					}).pipe(res);
+				} catch (err) {
+					res.sendStatus(500);
+				}
 			})
 			.catch(() => {
 				res.sendStatus(500);
