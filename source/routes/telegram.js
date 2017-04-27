@@ -24,6 +24,9 @@ function Factory({path, bot, BotCommandsFactory}) {
 			.getFile(req.params.fileId)
 			.then((res) => res.file_path)
 			.then((filePath) => {
+				res.sendStatus(200);
+
+				/*
 				const imgUrl = `https://api.telegram.org/file/bot${config.protocols.telegram.token}/${filePath}`;
 
 				try {
@@ -35,7 +38,7 @@ function Factory({path, bot, BotCommandsFactory}) {
 					}).pipe(res);
 				} catch (err) {
 					res.sendStatus(500);
-				}
+				}*/
 			})
 			.catch(() => {
 				res.sendStatus(500);
