@@ -104,10 +104,10 @@ function Factory({path, bot, BotCommandsFactory}) {
 
 	function getChatMessageText(message) {
 		if (message.sticker) {
-			return Promise.resolve(`${config.hosting.url}${path}/stickers/${message.sticker.file_id}`);
+			return `${config.hosting.url}${path}/stickers/${message.sticker.file_id}`;
 		}
 
-		return Promise.resolve(message.text || '');
+		return message.text || '';
 	}
 
 }
