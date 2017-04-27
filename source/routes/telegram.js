@@ -32,9 +32,9 @@ function Factory({path, bot, BotCommandsFactory}) {
 					input: 'download',
      				file: imgUrl
 				}).pipe(res);
-
-				//res.end();
-
+			})
+			.catch(() => {
+				res.sendStatus(500);
 			});
 	}
 
@@ -59,14 +59,11 @@ function Factory({path, bot, BotCommandsFactory}) {
 						/* custom command */
 					},
 					() => {
-						getChatMessageText(message).then((text) => {
-							console.log(text);
-							botCommands.send({
-								broadcast: true,
-								to: getChatId(message),
-								from: getUserName(message),
-								message: text
-							});
+						botCommands.send({
+							broadcast: true,
+							to: getChatId(message),
+							from: getUserName(message),
+							message: getChatMessageText(message)
 						});
 					}
 				);

@@ -31,29 +31,28 @@ function Factory(db, protocol, send, getChatId, getChatMessageText) {
 		assert(typeof onCommand === 'function', 'onCommand must be function');
 		assert(typeof onNotCommand === 'function', 'onNotCommand must be function');
 
-		getChatMessageText(message).then((messageText) => {
-			const match = messageText.match(isCommand);
-			if (!match) {
-				return onNotCommand(message);
-			}
+		const messageText = getChatMessageText(message);
+		const match = messageText.match(isCommand);
+		if (!match) {
+			return onNotCommand(message);
+		}
 
-			const commandText = match[2];
+		const commandText = match[2];
 
-			switch (true) {
-				case config.isDebug && debugRegisterCommandMatcher.test(commandText):
-					return registerChat(message).send();
-				case config.isDebug && debugUnregisterCommandMatcher.test(commandText):
-					return unregisterChat(message).send();
-				case chatStatusCommandMatcher.test(commandText):
-					return getChatStatus(message).send();
-				case linkChatsCommandMatcher.test(commandText):
-					return linkChats(message, commandText).send();
-				case unlinkChatsCommandMatcher.test(commandText):
-					return unlinkChats(message, commandText).send();
-				default:
-					return onCommand(messageText) || onNotCommand(message);
-			}
-		});
+		switch (true) {
+			case config.isDebug && debugRegisterCommandMatcher.test(commandText):
+				return registerChat(message).send();
+			case config.isDebug && debugUnregisterCommandMatcher.test(commandText):
+				return unregisterChat(message).send();
+			case chatStatusCommandMatcher.test(commandText):
+				return getChatStatus(message).send();
+			case linkChatsCommandMatcher.test(commandText):
+				return linkChats(message, commandText).send();
+			case unlinkChatsCommandMatcher.test(commandText):
+				return unlinkChats(message, commandText).send();
+			default:
+				return onCommand(messageText) || onNotCommand(message);
+		}
 	}
 
 	function SendWrapper(message, fn) {
