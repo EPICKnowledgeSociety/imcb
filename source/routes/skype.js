@@ -3,42 +3,39 @@ const router = new require('express').Router();
 
 module.exports = Factory;
 
-function Factory({bot, db, BotCommandsFactory}) {
+function Factory({bot, BotCommandsFactory}) {
 	const botCommands = BotCommandsFactory(getChatId, getChatMessageText);
 
-	bot.on('contactRelationUpdate', (message) => {
-		console.log('skype', 'contactRelationUpdate', message);
+	bot.on('conversationUpdate', (conversationUpdate) => {
+		console.log('skype contactRelationUpdate:', JSON.stringify(conversationUpdate));
 
-		if (message.action === 'add') {
-			db.registerChat(getChatId(message), (err) => {
-				if (err) {
-					return botCommands.sendError(message, err);
-				}
-				return botCommands.sendStatus(message);
-			});
-		} else {
-			db.unregisterChat(getChatId(message));
+		if (conversationUpdate.membersAdded) {
+			if (conversationUpdate.membersAdded.some((member) => member.id.includes(config.protocols.skype.appId))) {
+				return botCommands.registerChat(conversationUpdate);
+			}
+		} else if (conversationUpdate.membersRemoved) {
+			if (conversationUpdate.membersRemoved.some((member) => member.id.includes(config.protocols.skype.appId))) {
+				return botCommands.unregisterChat(conversationUpdate);
+			}
 		}
 	});
 
-	//bot.on('typing', (message) => {});
-	//bot.on('deleteUserData', (message) => {
-	//	console.log('skype', 'deleteUserData', message);
-	// User asked to delete their data
-	//});
+	bot.on('receive', (event) => {
+		console.log('skype event:', JSON.stringify(event));
+	});
+
 
 	bot.dialog('/', (session) => {
-
 		botCommands.process(session.message,
 			() => {
-
+				/* custom command */
 			},
 			() => {
 				botCommands.send({
 					broadcast: true,
 					to: getChatId(session.message),
 					from: {name: session.message.user.name},
-					message: getChatMessageText(session.message).slice(`@${config.protocols.skype.botName}`.length)
+					message: getChatMessageText(session.message).replace(new RegExp(`^@${config.protocols.skype.botName} `), '')
 				});
 			}
 		);

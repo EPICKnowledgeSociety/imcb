@@ -1,3 +1,5 @@
+require('isomorphic-fetch');
+
 const config = require('config');
 const configHelper = require('./utils/configHelper');
 const redis = require('redis');
@@ -39,14 +41,12 @@ function run({amqpConnection}) {
 		app.use('/api', routes.skype({
 			path: '/api',
 			bot: protocols.skype.bot,
-			db,
-			BotCommandsFactory: BotCommandsFactory.bind(null, 'skype', send)
+			BotCommandsFactory: BotCommandsFactory.bind(null, db, 'skype', send)
 		}));
-		app.use('/api', routes.telegram({
-			path: '/api',
+		app.use('/api/telegram', routes.telegram({
+			path: '/api/telegram',
 			bot: protocols.telegram.bot,
-			db,
-			BotCommandsFactory: BotCommandsFactory.bind(null, 'telegram', send)
+			BotCommandsFactory: BotCommandsFactory.bind(null, db, 'telegram', send)
 		}));
 
 		app.listen(config.hosting.port, () => {

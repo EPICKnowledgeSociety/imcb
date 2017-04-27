@@ -1,8 +1,11 @@
-//const assert = require('assert');
 const config = require('config');
 const BotBuilder = require('botbuilder');
 
 module.exports = Factory;
+
+
+const isTelegramSticker = new RegExp(`^${config.hosting.url}/api/telegram/stickers/`);
+
 
 function Factory() {
 	const connector = new BotBuilder.ChatConnector({
@@ -25,7 +28,6 @@ function Factory() {
 	}
 
 	function send({from, to, message} = {}, callback) {
-		const messageForSend = from && from.name ? `${from.name}:\n${message}` : message;
 
 		const address = {
 			conversation: {
@@ -36,9 +38,17 @@ function Factory() {
 			useAuth: true
 		};
 
-		const msg = new BotBuilder.Message()
-			.address(address)
-			.text(messageForSend);
+		const msg = new BotBuilder.Message().address(address);
+
+		if (isTelegramSticker.test(message)) {
+			msg.addAttachment(
+				new BotBuilder.ThumbnailCard()
+					.title(from && from.name)
+					.images([new BotBuilder.CardImage().url(message)])
+			);
+		} else {
+			msg.text(from && from.name ? `**${from.name}**:\n${message}` : message);
+		}
 
 		bot.send(msg, callback);
 	}

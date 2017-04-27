@@ -1,4 +1,6 @@
 module.exports = {
+	isDebug: process.env.NODE_ENV === 'development',
+
 	hosting: {
 		port: process.env.PORT || 3000,
 		url: process.env.APP_URL
@@ -9,6 +11,9 @@ module.exports = {
 	amqp: {
 		url: process.env.AMQP_URL,
 		lite: true
+	},
+	cloudconvert: {
+		apiKey: process.env.CLOUDCONVERT_API_KEY
 	},
 	protocols: {
 		skype: {

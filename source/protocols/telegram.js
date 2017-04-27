@@ -1,4 +1,3 @@
-//const assert = require('assert');
 const config = require('config');
 const Bot = require('node-telegram-bot-api');
 
