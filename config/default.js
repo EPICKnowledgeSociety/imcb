@@ -12,9 +12,6 @@ module.exports = {
 		url: process.env.AMQP_URL,
 		lite: true
 	},
-	cloudconvert: {
-		apiKey: process.env.CLOUDCONVERT_API_KEY
-	},
 	protocols: {
 		skype: {
 			botName: 'imcb',

@@ -6,8 +6,6 @@ const spawn = require('child_process').spawn;
 
 module.exports = Factory;
 
-const cloudconvert = new (require('cloudconvert'))('8WpxeaisNxxInxlgCPqA0p4a5bellXZr6DeZuwh2PhjKXoNtTCxo5ozgVHTVnjHbH_VULkiGnQQpu6DgkEPk7g');
-
 function Factory({path, bot, BotCommandsFactory}) {
 	const botCommands = BotCommandsFactory(getChatId, getChatMessageText);
 
@@ -26,11 +24,10 @@ function Factory({path, bot, BotCommandsFactory}) {
 			.then((res) => res.file_path)
 			.then((filePath) => {
 				const imgUrl = `https://api.telegram.org/file/bot${config.protocols.telegram.token}/${filePath}`;
-				const magick = spawn('magick', [
-					'convert', imgUrl,
-					'-resize', '128',
-					'png:-'
-				]);
+
+				const magick = (process.platform === 'win32')
+					? spawn('magick', ['convert', imgUrl, '-resize', '128', 'png:-'])
+					: spawn('convert', [imgUrl, '-resize', '128', 'png:-']);
 
 				magick.stderr.on('data', (data) => console.error('magick', data));
 				magick.stdout.pipe(res);
