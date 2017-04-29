@@ -2,10 +2,11 @@ const config = require('config');
 const router = new require('express').Router();
 const http = require('http');
 
+const spawn = require('child_process').spawn;
+
 module.exports = Factory;
 
 const cloudconvert = new (require('cloudconvert'))('8WpxeaisNxxInxlgCPqA0p4a5bellXZr6DeZuwh2PhjKXoNtTCxo5ozgVHTVnjHbH_VULkiGnQQpu6DgkEPk7g');
-
 
 function Factory({path, bot, BotCommandsFactory}) {
 	const botCommands = BotCommandsFactory(getChatId, getChatMessageText);
@@ -24,23 +25,20 @@ function Factory({path, bot, BotCommandsFactory}) {
 			.getFile(req.params.fileId)
 			.then((res) => res.file_path)
 			.then((filePath) => {
-				res.sendStatus(200);
-
-				/*
 				const imgUrl = `https://api.telegram.org/file/bot${config.protocols.telegram.token}/${filePath}`;
+				const magick = spawn('magick', [
+					'convert', imgUrl,
+					'-resize', '128',
+					'png:-'
+				]);
 
-				try {
-					cloudconvert.convert({
-						inputformat: 'webp',
-						outputformat: 'png',
-						input: 'download',
-						file: imgUrl
-					}).pipe(res);
-				} catch (err) {
-					res.sendStatus(500);
-				}*/
+				magick.stderr.on('data', (data) => console.error('magick', data));
+				magick.stdout.pipe(res);
+
+				res.type('png');
 			})
-			.catch(() => {
+			.catch((err) => {
+				console.error(err);
 				res.sendStatus(500);
 			});
 	}
