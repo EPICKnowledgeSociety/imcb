@@ -23,7 +23,7 @@ function Factory({path, bot, BotCommandsFactory}) {
 			.getFile(req.params.fileId)
 			.then((res) => res.file_path)
 			.then((filePath) => {
-				const imgUrl = `https://api.telegram.org/file/bot${config.protocols.telegram.token}/${filePath}`;
+				const imgUrl = `http://api.telegram.org/file/bot${config.protocols.telegram.token}/${filePath}`;
 
 				const magick = (process.platform === 'win32')
 					? spawn('magick', ['convert', imgUrl, '-resize', '128', 'png:-'])
