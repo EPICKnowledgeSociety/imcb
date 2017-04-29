@@ -29,7 +29,7 @@ function Factory({path, bot, BotCommandsFactory}) {
 					? spawn('magick', ['convert', imgUrl, '-resize', '128', 'png:-'])
 					: spawn('convert', [imgUrl, '-resize', '128', 'png:-']);
 
-				magick.stderr.on('data', (data) => console.error('magick', data));
+				magick.stderr.on('data', (data) => console.error(data.toString()));
 				magick.stdout.pipe(res);
 
 				res.type('png');
